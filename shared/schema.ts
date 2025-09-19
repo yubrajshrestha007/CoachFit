@@ -9,10 +9,21 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+export const routines = pgTable("routines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  isTemplate: boolean("is_template").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const workoutDays = pgTable("workout_days", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  dayNumber: integer("day_number").notNull(), // 1-4
-  name: text("name").notNull(), // "Upper Push", "Lower Squat", etc.
+  routineId: varchar("routine_id").notNull().references(() => routines.id),
+  dayNumber: integer("day_number").notNull(),
+  name: text("name").notNull(),
   description: text("description").notNull(),
   estimatedDuration: text("estimated_duration").notNull(),
 });
@@ -69,9 +80,22 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+export const insertRoutineSchema = createInsertSchema(routines).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWorkoutDaySchema = createInsertSchema(workoutDays).omit({
+  id: true,
+});
+
 export const insertWorkoutSessionSchema = createInsertSchema(workoutSessions).omit({
   id: true,
   date: true,
+});
+
+export const insertExerciseSchema = createInsertSchema(exercises).omit({
+  id: true,
 });
 
 export const insertWorkoutSetSchema = createInsertSchema(workoutSets).omit({
@@ -91,12 +115,16 @@ export const insertPersonalRecordSchema = createInsertSchema(personalRecords).om
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type Routine = typeof routines.$inferSelect;
 export type WorkoutDay = typeof workoutDays.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
 export type WorkoutSession = typeof workoutSessions.$inferSelect;
 export type WorkoutSet = typeof workoutSets.$inferSelect;
 export type RecoveryLog = typeof recoveryLogs.$inferSelect;
 export type PersonalRecord = typeof personalRecords.$inferSelect;
+export type InsertRoutine = z.infer<typeof insertRoutineSchema>;
+export type InsertWorkoutDay = z.infer<typeof insertWorkoutDaySchema>;
+export type InsertExercise = z.infer<typeof insertExerciseSchema>;
 export type InsertWorkoutSession = z.infer<typeof insertWorkoutSessionSchema>;
 export type InsertWorkoutSet = z.infer<typeof insertWorkoutSetSchema>;
 export type InsertRecoveryLog = z.infer<typeof insertRecoveryLogSchema>;
